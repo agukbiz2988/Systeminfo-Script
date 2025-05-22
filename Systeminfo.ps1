@@ -53,11 +53,11 @@ $bitlockerInfo = Get-BitLockerVolume |
 # Add a message if no BitLocker information is found
 if ($bitlockerInfo.Count -eq 0) {
     $bitlockerInfo = @([PSCustomObject]@{
-        MountPoint          = "N/A"
-        VolumeStatus        = "No BitLocker information available."
+        MountPoint           = "N/A"
+        VolumeStatus         = "No BitLocker information available."
         EncryptionPercentage = "N/A"
-        ProtectionStatus    = "N/A"
-        KeyProtector        = "N/A"
+        ProtectionStatus     = "N/A"
+        KeyProtector         = "N/A"
     })
 }
 
@@ -97,6 +97,74 @@ if ($installedPrograms.Count -eq 0) {
     })
 }
 
+# IP Configuration Information
+$ipConfigInfo = Get-NetIPConfiguration | Select-Object InterfaceAlias,
+    @{Name="IPv4 Address(es)"; Expression={$_.IPv4Address.IPAddress -join ", "}},
+    @{Name="IPv4 Default Gateway(s)"; Expression={$_.IPv4DefaultGateway.NextHop -join ", "}},
+    @{Name="DNS Server(s)"; Expression={$_.DNSServer.ServerAddresses -join ", "}}
+
+# Add a message if no IP configuration information is found
+if ($ipConfigInfo.Count -eq 0) {
+    $ipConfigInfo = @([PSCustomObject]@{
+        "InterfaceAlias"         = "N/A"
+        "IPv4 Address(es)"       = "No IP configuration information available."
+        "IPv4 Default Gateway(s)" = "N/A"
+        "DNS Server(s)"          = "N/A"
+    })
+}
+
+# Video Controller Information
+$videoControllerInfo = Get-CimInstance Win32_VideoController | Select-Object Name, CurrentHorizontalResolution, CurrentVerticalResolution, @{Name="AdapterRAM_GB";Expression={[math]::Round($_.AdapterRAM / 1GB, 2)}}
+
+# Add a message if no video controller information is found
+if ($videoControllerInfo.Count -eq 0) {
+    $videoControllerInfo = @([PSCustomObject]@{
+        Name                      = "N/A"
+        CurrentHorizontalResolution = "N/A"
+        CurrentVerticalResolution = "N/A"
+        AdapterRAM_GB             = "No video controller information available."
+    })
+}
+
+# Current Wi-Fi Details (Non-Sensitive - BSSID and Cipher removed)
+$wifiDetails = @()
+$netshOutput = (netsh wlan show interfaces) -join "`n"
+
+# Regex to capture blocks for each interface
+$interfaceBlocks = [regex]::Matches($netshOutput, '(?s)(Name\s*:\s*.+?)(?=Name\s*:|\Z)')
+
+foreach ($block in $interfaceBlocks) {
+    $currentBlock = $block.Groups[1].Value
+    $name = ($currentBlock | Select-String -Pattern 'Name\s*:\s*(.+)' | ForEach-Object {$_.Matches[0].Groups[1].Value}).Trim()
+    $state = ($currentBlock | Select-String -Pattern 'State\s*:\s*(.+)' | ForEach-Object {$_.Matches[0].Groups[1].Value}).Trim()
+
+    if ($state -eq 'connected') {
+        $ssid = ($currentBlock | Select-String -Pattern 'SSID\s*:\s*(.+)' | ForEach-Object {$_.Matches[0].Groups[1].Value}).Trim()
+        $signal = ($currentBlock | Select-String -Pattern 'Signal\s*:\s*(.+)' | ForEach-Object {$_.Matches[0].Groups[1].Value}).Trim()
+        $radioType = ($currentBlock | Select-String -Pattern 'Radio type\s*:\s*(.+)' | ForEach-Object {$_.Matches[0].Groups[1].Value}).Trim()
+        $authentication = ($currentBlock | Select-String -Pattern 'Authentication\s*:\s*(.+)' | ForEach-Object {$_.Matches[0].Groups[1].Value}).Trim()
+
+        $wifiDetails += [PSCustomObject]@{
+            InterfaceName  = $name
+            SSID           = $ssid
+            SignalStrength = $signal
+            RadioType      = $radioType
+            Authentication = $authentication
+        }
+    }
+}
+
+# Add a message if no active Wi-Fi connections are found
+if ($wifiDetails.Count -eq 0) {
+    $wifiDetails = @([PSCustomObject]@{
+        InterfaceName  = "N/A"
+        SSID           = "No active Wi-Fi connections found."
+        SignalStrength = "N/A"
+        RadioType      = "N/A"
+        Authentication = "N/A"
+    })
+}
+
 
 # --- Convert Data to HTML Fragments ---
 # Each section is converted to an HTML table fragment
@@ -106,6 +174,9 @@ $memoryInfoHtml = $memoryInfo | ConvertTo-Html -Fragment -As Table -PreContent "
 $diskInfoHtml = $diskInfo | ConvertTo-Html -Fragment -As Table -PreContent "<h3>Logical Disk Information (Fixed)</h3>"
 $physicalDiskInfoHtml = $physicalDiskInfo | ConvertTo-Html -Fragment -As Table -PreContent "<h3>Physical Disk Information</h3>"
 $networkAdaptersHtml = $networkAdapters | ConvertTo-Html -Fragment -As Table -PreContent "<h3>Network Adapters</h3>"
+$ipConfigInfoHtml = $ipConfigInfo | ConvertTo-Html -Fragment -As Table -PreContent "<h3>IP Configuration</h3>"
+$videoControllerInfoHtml = $videoControllerInfo | ConvertTo-Html -Fragment -As Table -PreContent "<h3>Video Controller Information</h3>"
+$wifiDetailsHtml = $wifiDetails | ConvertTo-Html -Fragment -As Table -PreContent "<h3>Current Wi-Fi Connection Details</h3>"
 $sharedDrivesHtml = $sharedDrives | ConvertTo-Html -Fragment -As Table -PreContent "<h3>Mapped Network Drives</h3>"
 $bitlockerInfoHtml = $bitlockerInfo | ConvertTo-Html -Fragment -As Table -PreContent "<h3>BitLocker Status</h3>"
 $hotfixesHtml = $hotfixes | ConvertTo-Html -Fragment -As Table -PreContent "<h3>Installed Updates (Hotfixes)</h3>"
@@ -136,6 +207,7 @@ $htmlReport = @"
         <h1>System Report</h1>
         <p><strong>Date Generated:</strong> $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")</p>
         <p><strong>Computer Name:</strong> $($computerInfo.CsName)</p>
+        <p><strong>Current User:</strong> $($env:USERNAME)</p>
 
         $computerInfoHtml
         $cpuInfoHtml
@@ -143,6 +215,9 @@ $htmlReport = @"
         $diskInfoHtml
         $physicalDiskInfoHtml
         $networkAdaptersHtml
+        $ipConfigInfoHtml
+        $wifiDetailsHtml
+	$videoControllerInfoHtml
         $sharedDrivesHtml
         $bitlockerInfoHtml
         $hotfixesHtml
