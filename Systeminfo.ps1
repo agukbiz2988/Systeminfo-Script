@@ -178,7 +178,7 @@ $ipConfigInfoHtml = $ipConfigInfo | ConvertTo-Html -Fragment -As Table -PreConte
 $videoControllerInfoHtml = $videoControllerInfo | ConvertTo-Html -Fragment -As Table -PreContent "<h3>Video Controller Information</h3>"
 $wifiDetailsHtml = $wifiDetails | ConvertTo-Html -Fragment -As Table -PreContent "<h3>Current Wi-Fi Connection Details</h3>"
 $sharedDrivesHtml = $sharedDrives | ConvertTo-Html -Fragment -As Table -PreContent "<h3>Mapped Network Drives</h3>"
-$bitlockerInfoHtml = $bitlockerInfo | ConvertTo-Html -Fragment -As Table -PreContent "<h3>BitLocker Status</h3>"
+#$bitlockerInfoHtml = $bitlockerInfo | ConvertTo-Html -Fragment -As Table -PreContent "<h3>BitLocker Status</h3>"
 $hotfixesHtml = $hotfixes | ConvertTo-Html -Fragment -As Table -PreContent "<h3>Installed Updates (Hotfixes)</h3>"
 $installedProgramsHtml = $installedPrograms | ConvertTo-Html -Fragment -As Table -PreContent "<h3>Installed Applications</h3>"
 
@@ -217,7 +217,7 @@ $htmlReport = @"
         $networkAdaptersHtml
         $ipConfigInfoHtml
         $wifiDetailsHtml
-	$videoControllerInfoHtml
+	    $videoControllerInfoHtml
         $sharedDrivesHtml
         $hotfixesHtml
         $installedProgramsHtml
@@ -235,4 +235,5 @@ $htmlReport | Out-File -FilePath $outputPath -Encoding UTF8
 
 Write-Host "System report saved to: $outputPath"
 Invoke-Item $outputPath # Opens the HTML file in your default browser
+
 
