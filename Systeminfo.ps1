@@ -47,8 +47,8 @@ $hotfixes = Get-HotFix | Select-Object Description, HotFixID, InstalledBy, Insta
 
 # BitLocker Information (requires BitLocker module and often admin rights for full details)
 # This command gets the encryption status of volumes.
-$bitlockerInfo = Get-BitLockerVolume |
-    Select-Object MountPoint, VolumeStatus, EncryptionPercentage, ProtectionStatus, KeyProtector
+#$bitlockerInfo = Get-BitLockerVolume |
+    #Select-Object MountPoint, VolumeStatus, EncryptionPercentage, ProtectionStatus, KeyProtector
 
 # Add a message if no BitLocker information is found
 if ($bitlockerInfo.Count -eq 0) {
@@ -219,7 +219,6 @@ $htmlReport = @"
         $wifiDetailsHtml
 	$videoControllerInfoHtml
         $sharedDrivesHtml
-        $bitlockerInfoHtml
         $hotfixesHtml
         $installedProgramsHtml
 
@@ -236,3 +235,4 @@ $htmlReport | Out-File -FilePath $outputPath -Encoding UTF8
 
 Write-Host "System report saved to: $outputPath"
 Invoke-Item $outputPath # Opens the HTML file in your default browser
+
