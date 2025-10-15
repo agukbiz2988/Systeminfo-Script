@@ -51,15 +51,15 @@ $hotfixes = Get-HotFix | Select-Object Description, HotFixID, InstalledBy, Insta
     #Select-Object MountPoint, VolumeStatus, EncryptionPercentage, ProtectionStatus, KeyProtector
 
 # Add a message if no BitLocker information is found
-if ($bitlockerInfo.Count -eq 0) {
-    $bitlockerInfo = @([PSCustomObject]@{
-        MountPoint           = "N/A"
-        VolumeStatus         = "No BitLocker information available."
-        EncryptionPercentage = "N/A"
-        ProtectionStatus     = "N/A"
-        KeyProtector         = "N/A"
-    })
-}
+#if ($bitlockerInfo.Count -eq 0) {
+   # $bitlockerInfo = @([PSCustomObject]@{
+      #  MountPoint           = "N/A"
+      #  VolumeStatus         = "No BitLocker information available."
+      #  EncryptionPercentage = "N/A"
+      #  ProtectionStatus     = "N/A"
+      # KeyProtector         = "N/A"
+    #})
+#}
 
 # Installed Applications (excluding system updates)
 $installedPrograms = @()
@@ -235,5 +235,6 @@ $htmlReport | Out-File -FilePath $outputPath -Encoding UTF8
 
 Write-Host "System report saved to: $outputPath"
 Invoke-Item $outputPath # Opens the HTML file in your default browser
+
 
 
