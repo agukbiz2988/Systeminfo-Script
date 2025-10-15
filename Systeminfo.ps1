@@ -3,7 +3,7 @@ $deviceName = (Get-ComputerInfo).CsName
 
 # Define the output file path including the device name
 # The report will be saved in C:\IT\YourDeviceName.html
-$outputPath = "C:\IT\$deviceName.html"
+$outputPath = "C:\SystemInfo\$deviceName.html"
 
 # --- Gather System Information ---
 # General computer details
@@ -40,6 +40,19 @@ if ($sharedDrives.Count -eq 0) {
         Root        = "N/A"
         DisplayRoot = "No mapped network drives available."
     })
+}
+
+function createFolderPath {
+
+        #folder Paths 
+        $a = Test-Path -Path "C:\SystemInfo"
+        #Statement to check Paths and create a folder if it doesn't exist
+        if(!$a){
+            new-Item -Path "C:\" -Name "SystemInfo" -ItemType "directory"
+            Write-Output "Path Created"
+        }else{
+            Write-Output "Path directory already exists"
+        }
 }
 
 # Installed Hotfixes (Windows Updates)
@@ -230,11 +243,15 @@ $htmlReport = @"
 </html>
 "@
 
+#Create folder path Ready for the file to export
+createFolderPath
+
 # Save the report to the file
 $htmlReport | Out-File -FilePath $outputPath -Encoding UTF8
 
 Write-Host "System report saved to: $outputPath"
 Invoke-Item $outputPath # Opens the HTML file in your default browser
+
 
 
 
