@@ -258,3 +258,6 @@ $htmlReport | Out-File -FilePath $outputPath -Encoding UTF8
 
 Write-Host "System report saved to: $outputPath"
 Invoke-Item $outputPath # Opens the HTML file in your default browser
+
+Start-Process explorer.exe "C:\SystemInfo\"
+
